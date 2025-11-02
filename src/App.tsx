@@ -67,8 +67,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-white dark:bg-black">
-      <Card className="w-full max-w-2xl">
+    <div className="h-dvh flex items-center justify-center p-4 bg-white dark:bg-black">
+      <Card className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl flex items-center gap-2">
