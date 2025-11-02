@@ -2,9 +2,36 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>0xbasinassvg</title>
+    <title>0xbasinassvg - SVG to Favicon Converter</title>
+    <style>
+      /* Critical CSS to prevent flash */
+      html {
+        background-color: white;
+        color-scheme: light;
+      }
+      html.dark {
+        background-color: rgb(23, 23, 23);
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        background-color: transparent;
+      }
+    </style>
+    <script>
+      (function() {
+        try {
+          const theme = localStorage.getItem('theme');
+          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          const appliedTheme = theme === 'system' || !theme ? systemTheme : theme;
+
+          if (appliedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
