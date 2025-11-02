@@ -1,10 +1,19 @@
 /**
- * Utility functions for converting SVG to multi-size favicon.ico
+ * Utility functions for converting SVG to multi-size favicon.ico and high-resolution favicon bundles
  */
+
+import JSZip from 'jszip'
 
 export interface IconSize {
   width: number
   height: number
+}
+
+export interface FaviconBundle {
+  ico: Blob
+  pngs: Map<string, Blob>
+  manifest: string
+  htmlSnippet: string
 }
 
 /**
@@ -179,6 +188,24 @@ export async function createIcoFile(
 }
 
 /**
+ * Converts a canvas to PNG Blob
+ */
+export function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('Failed to convert canvas to blob'))
+          return
+        }
+        resolve(blob)
+      },
+      'image/png'
+    )
+  })
+}
+
+/**
  * Main function to convert SVG to multi-size favicon.ico
  */
 export async function convertSvgToFavicon(
@@ -192,11 +219,11 @@ export async function convertSvgToFavicon(
   // Convert SVG to canvas at each size
   const canvasPromises = sizes.map(size => svgToCanvas(svgFile, size))
   const canvases = await Promise.all(canvasPromises)
-  
+
   // Convert each canvas to PNG
   const pngPromises = canvases.map(canvas => canvasToPng(canvas))
   const pngDataArray = await Promise.all(pngPromises)
-  
+
   // Create ICO file from PNGs
   const icoData = await Promise.all(
     pngDataArray.map(async (pngData, index) => ({
@@ -205,7 +232,143 @@ export async function convertSvgToFavicon(
       height: sizes[index].height,
     }))
   )
-  
+
   return createIcoFile(icoData)
+}
+
+/**
+ * Generates a complete high-resolution favicon bundle
+ */
+export async function generateFaviconBundle(svgFile: File): Promise<FaviconBundle> {
+  // Define all sizes for the bundle
+  const icoSizes: IconSize[] = [
+    { width: 16, height: 16 },
+    { width: 32, height: 32 },
+    { width: 48, height: 48 },
+    { width: 64, height: 64 },
+    { width: 128, height: 128 },
+    { width: 256, height: 256 },
+  ]
+
+  const pngSizes = {
+    'favicon-16x16.png': { width: 16, height: 16 },
+    'favicon-32x32.png': { width: 32, height: 32 },
+    'favicon-96x96.png': { width: 96, height: 96 },
+    'favicon-192x192.png': { width: 192, height: 192 },
+    'favicon-512x512.png': { width: 512, height: 512 },
+    'apple-touch-icon.png': { width: 180, height: 180 },
+    'android-chrome-192x192.png': { width: 192, height: 192 },
+    'android-chrome-512x512.png': { width: 512, height: 512 },
+  }
+
+  // Generate ICO file
+  const icoBlob = await convertSvgToFavicon(svgFile, icoSizes)
+
+  // Generate PNG files
+  const pngs = new Map<string, Blob>()
+
+  for (const [filename, size] of Object.entries(pngSizes)) {
+    const canvas = await svgToCanvas(svgFile, size)
+    const blob = await canvasToPngBlob(canvas)
+    pngs.set(filename, blob)
+  }
+
+  // Generate manifest.json
+  const manifest = JSON.stringify({
+    name: 'App',
+    short_name: 'App',
+    icons: [
+      {
+        src: '/android-chrome-192x192.png',
+        sizes: '192x192',
+        type: 'image/png'
+      },
+      {
+        src: '/android-chrome-512x512.png',
+        sizes: '512x512',
+        type: 'image/png'
+      }
+    ],
+    theme_color: '#ffffff',
+    background_color: '#ffffff',
+    display: 'standalone'
+  }, null, 2)
+
+  // Generate HTML snippet
+  const htmlSnippet = `<!-- Favicon Bundle - Add to your <head> -->
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
+<link rel="manifest" href="/manifest.json">`
+
+  return {
+    ico: icoBlob,
+    pngs,
+    manifest,
+    htmlSnippet
+  }
+}
+
+/**
+ * Creates a ZIP file containing the complete favicon bundle
+ */
+export async function createFaviconBundleZip(svgFile: File): Promise<Blob> {
+  const bundle = await generateFaviconBundle(svgFile)
+  const zip = new JSZip()
+
+  // Add favicon.ico
+  zip.file('favicon.ico', bundle.ico)
+
+  // Add all PNG files
+  for (const [filename, blob] of bundle.pngs.entries()) {
+    zip.file(filename, blob)
+  }
+
+  // Add manifest.json
+  zip.file('manifest.json', bundle.manifest)
+
+  // Add README with HTML snippet
+  const readme = `# Favicon Bundle
+
+This bundle contains high-resolution favicons for all platforms.
+
+## Files Included:
+- favicon.ico (multi-size: 16x16, 32x32, 48x48, 64x64, 128x128, 256x256)
+- favicon-16x16.png
+- favicon-32x32.png
+- favicon-96x96.png
+- favicon-192x192.png (for web manifest)
+- favicon-512x512.png (for web manifest)
+- apple-touch-icon.png (180x180)
+- android-chrome-192x192.png
+- android-chrome-512x512.png
+- manifest.json (Web App Manifest)
+
+## Installation:
+1. Copy all files to your website's root directory
+2. Add the following code to your HTML <head>:
+
+${bundle.htmlSnippet}
+
+## Notes:
+- All PNGs are high-resolution and optimized
+- The favicon.ico contains multiple sizes for legacy browser support
+- The manifest.json is ready for Progressive Web Apps (PWA)
+`
+
+  zip.file('README.md', readme)
+
+  // Generate ZIP blob
+  return await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: {
+      level: 9
+    }
+  })
 }
 

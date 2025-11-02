@@ -1,73 +1,64 @@
-# React + TypeScript + Vite
+# SVG to Favicon Bundle Generator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, lightweight web app that converts SVG files into complete high-resolution favicon bundles for all platforms.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **High-Resolution Output**: Generates favicons up to 512×512 pixels
+- **Multi-Format Support**: Creates ICO file with 6 embedded sizes (16×16 to 256×256)
+- **Complete Bundle**: Includes all necessary files:
+  - `favicon.ico` (multi-size)
+  - Multiple PNG files (16×16, 32×32, 96×96, 192×192, 512×512)
+  - `apple-touch-icon.png` (180×180)
+  - Android Chrome icons (192×192, 512×512)
+  - `manifest.json` for Progressive Web Apps
+  - `README.md` with installation instructions
+- **One-Click Download**: Everything packaged as a ZIP file
+- **Dark Mode Support**: Beautiful UI with theme toggle
+- **No Dependencies**: Runs entirely in the browser, no server required
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 + TypeScript
+- Vite for blazing fast builds
+- Tailwind CSS 4 + shadcn/ui components
+- JSZip for bundle creation
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Development
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Build for Production
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
+npm run preview
 ```
+
+### Deployment
+
+The `dist` folder contains static files ready to deploy to any hosting service (Vercel, Netlify, GitHub Pages, etc.).
+
+## Usage
+
+1. Upload an SVG file
+2. Preview your icon
+3. Click "Download Bundle (.zip)"
+4. Extract and copy files to your website's root directory
+5. Add the HTML snippet from the included README to your `<head>` tag
+
+## Before Deploying
+
+- [ ] Add a favicon to `/public/favicon.ico` (use your own tool!)
+- [ ] Update Open Graph image URL in `index.html` if needed
+- [ ] Test with various SVG files
+- [ ] Run `npm run build` to ensure no errors
+
+## License
+
+MIT

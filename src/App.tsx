@@ -1,10 +1,9 @@
 import { useState, useRef } from 'react'
-import { convertSvgToFavicon } from './utils/favicon-converter'
+import { createFaviconBundleZip } from './utils/favicon-converter'
 import { Button } from './components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card'
-import { Input } from './components/ui/input'
 import { ModeToggle } from '@/components/theme-toggle'
-import { Download, Upload, Loader2 } from 'lucide-react'
+import { Download, Upload, Loader2, Package } from 'lucide-react'
 import './App.css'
 
 function App() {
@@ -40,19 +39,19 @@ function App() {
     setError(null)
 
     try {
-      const icoBlob = await convertSvgToFavicon(svgFile)
-      
+      const zipBlob = await createFaviconBundleZip(svgFile)
+
       // Create download link
-      const url = URL.createObjectURL(icoBlob)
+      const url = URL.createObjectURL(zipBlob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'favicon.ico'
+      a.download = 'favicon-bundle.zip'
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to convert SVG to favicon')
+      setError(err instanceof Error ? err.message : 'Failed to generate favicon bundle')
     } finally {
       setIsProcessing(false)
     }
@@ -68,44 +67,50 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-white dark:bg-black">
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-white dark:bg-black">
+      <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-2xl">SVG to Favicon Converter</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <Package className="size-6" />
+              SVG to Favicon Bundle
+            </CardTitle>
+            <ModeToggle />
+          </div>
           <CardDescription>
-            Convert your SVG into a multi-size favicon.ico (16×16, 32×32, 48×48)
+            Convert your SVG into a complete high-resolution favicon bundle with all formats and sizes
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="svg-upload" className="block text-sm font-medium">
-              Select SVG File
-            </label>
-            <div className="flex gap-2">
-              <Input
-                id="svg-upload"
-                ref={fileInputRef}
-                type="file"
-                accept=".svg,image/svg+xml"
-                onChange={handleFileSelect}
-                className="flex-1"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-                aria-label="Upload SVG"
-              >
-                <Upload className="size-4" />
-              </Button>
-            </div>
+          <div className="space-y-3">
+            <input
+              id="svg-upload"
+              ref={fileInputRef}
+              type="file"
+              accept=".svg,image/svg+xml"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              className="w-full h-20 border-dashed border-2"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Upload className="size-5" />
+                <div className="text-sm">
+                  {svgFile ? (
+                    <span className="font-medium">{svgFile.name}</span>
+                  ) : (
+                    <span>Click to select SVG file</span>
+                  )}
+                </div>
+              </div>
+            </Button>
           </div>
 
           {preview && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label className="block text-sm font-medium">Preview</label>
               <div className="border rounded-md p-4 bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
                 <img
@@ -114,9 +119,19 @@ function App() {
                   className="max-w-full max-h-32 object-contain"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Sizes: 16×16, 32×32, 48×48
-              </p>
+              <div className="p-3 rounded-md bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
+                <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">
+                  Bundle includes:
+                </p>
+                <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                  <li>• favicon.ico (16×16 to 256×256)</li>
+                  <li>• High-res PNGs (up to 512×512)</li>
+                  <li>• Apple Touch Icon (180×180)</li>
+                  <li>• Android Chrome icons</li>
+                  <li>• manifest.json for PWA</li>
+                  <li>• README with installation guide</li>
+                </ul>
+              </div>
             </div>
           )}
 
@@ -135,12 +150,12 @@ function App() {
               {isProcessing ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Processing...
+                  Generating Bundle...
                 </>
               ) : (
                 <>
                   <Download className="size-4" />
-                  Generate & Download
+                  Download Bundle (.zip)
                 </>
               )}
             </Button>
